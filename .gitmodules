@@ -1,0 +1,6 @@
+[submodule "third_party/psxavenc"]
+	path = third_party/psxavenc
+	url = https://github.com/WonderfulToolchain/psxavenc.git
+[submodule "cdi-sdk"]
+	path = cdi-sdk
+	url = https://github.com/TwBurn/cdi-sdk.git

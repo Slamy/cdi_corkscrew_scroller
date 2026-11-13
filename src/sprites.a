@@ -1,0 +1,173 @@
+ nam sprites
+ ttl sprites
+edition set 1
+ psect sprites,0,0,edition,0,0
+
+* Copy a vertical section of a tile column. Source is in d0, destination in
+* d1, and the number of rows is on the stack. The caller splits at ring wrap.
+column_copy:
+ movem.l d2/a0-a1,-(sp)
+ movea.l d0,a0
+ movea.l d1,a1
+ move.l 16(sp),d2
+ subq.w #1,d2
+cc_loop:
+ move.b (a0),(a1)
+ adda.w #16,a0
+ adda.w #800,a1
+ dbf d2,cc_loop
+ movem.l (sp)+,d2/a0-a1
+ rts
+
+* Microware C passes the first two arguments in d0 and d1.
+* Each destination is 16-pixel aligned, and each scanline is 384 bytes.
+sprite_clear:
+ move.l a0,-(sp)
+ movea.l d0,a0
+ adda.w #772,a0
+ moveq #9,d0
+sc_loop:
+ clr.b -1(a0)
+ clr.l (a0)
+ clr.l 4(a0)
+ clr.b 8(a0)
+ adda.w #384,a0
+ dbf d0,sc_loop
+ moveq #3,d0
+sc_feet:
+ clr.l (a0)
+ clr.l 4(a0)
+ adda.w #384,a0
+ dbf d0,sc_feet
+ movea.l (sp)+,a0
+ rts
+
+* Update only rows that enter or leave the silhouette. d0 and d1 hold the
+* old and new top-left addresses; delta and packed color are on the stack.
+* Caller handles delta zero and absolute deltas of ten pixels or more.
+sprite_move:
+ movem.l d2-d4/a0-a2,-(sp)
+ movea.l d0,a0
+ movea.l d1,a1
+ adda.w #772,a0
+ adda.w #772,a1
+ move.l 28(sp),d2
+ move.l 32(sp),d1
+ tst.l d2
+ bmi sm_up
+
+* Moving down: erase top rows of the old core and paint the new bottom.
+ move.l d2,d3
+ subq.w #1,d3
+sm_down_clear:
+ clr.l (a0)
+ clr.l 4(a0)
+ adda.w #384,a0
+ dbf d3,sm_down_clear
+ movea.l a1,a2
+ moveq #14,d4
+ sub.l d2,d4
+ mulu #384,d4
+ adda.l d4,a2
+ move.l d2,d3
+ subq.w #1,d3
+sm_down_draw:
+ move.l d1,(a2)
+ move.l d1,4(a2)
+ adda.w #384,a2
+ dbf d3,sm_down_draw
+* The two side pixels cover only the top ten rows of the shape.
+ movea.l d0,a0
+ adda.w #772,a0
+ move.l d2,d3
+ subq.w #1,d3
+sm_down_edge_clear:
+ clr.b -1(a0)
+ clr.b 8(a0)
+ adda.w #384,a0
+ dbf d3,sm_down_edge_clear
+ movea.l a1,a2
+ moveq #10,d4
+ sub.l d2,d4
+ mulu #384,d4
+ adda.l d4,a2
+ move.l d2,d3
+ subq.w #1,d3
+sm_down_edge_draw:
+ move.b d1,-1(a2)
+ move.b d1,8(a2)
+ adda.w #384,a2
+ dbf d3,sm_down_edge_draw
+ bra sm_done
+
+* Moving up: erase the old bottom and paint the new top.
+sm_up:
+ neg.l d2
+ movea.l a0,a2
+ moveq #14,d4
+ sub.l d2,d4
+ mulu #384,d4
+ adda.l d4,a2
+ move.l d2,d3
+ subq.w #1,d3
+sm_up_clear:
+ clr.l (a2)
+ clr.l 4(a2)
+ adda.w #384,a2
+ dbf d3,sm_up_clear
+ movea.l a1,a2
+ move.l d2,d3
+ subq.w #1,d3
+sm_up_draw:
+ move.l d1,(a2)
+ move.l d1,4(a2)
+ adda.w #384,a2
+ dbf d3,sm_up_draw
+ movea.l a0,a2
+ moveq #10,d4
+ sub.l d2,d4
+ mulu #384,d4
+ adda.l d4,a2
+ move.l d2,d3
+ subq.w #1,d3
+sm_up_edge_clear:
+ clr.b -1(a2)
+ clr.b 8(a2)
+ adda.w #384,a2
+ dbf d3,sm_up_edge_clear
+ movea.l a1,a2
+ move.l d2,d3
+ subq.w #1,d3
+sm_up_edge_draw:
+ move.b d1,-1(a2)
+ move.b d1,8(a2)
+ adda.w #384,a2
+ dbf d3,sm_up_edge_draw
+sm_done:
+ movem.l (sp)+,d2-d4/a0-a2
+ rts
+
+* Draw the original silhouette: rows 2..11 cover columns 3..12, and
+* rows 12..15 cover columns 4..11.  d1 contains four copies of the color.
+sprite_draw:
+ move.l a0,-(sp)
+ movea.l d0,a0
+ adda.w #772,a0
+ moveq #9,d0
+sd_loop:
+ move.b d1,-1(a0)
+ move.l d1,(a0)
+ move.l d1,4(a0)
+ move.b d1,8(a0)
+ adda.w #384,a0
+ dbf d0,sd_loop
+ moveq #3,d0
+sd_feet:
+ move.l d1,(a0)
+ move.l d1,4(a0)
+ adda.w #384,a0
+ dbf d0,sd_feet
+ movea.l (sp)+,a0
+ rts
+
+ ends

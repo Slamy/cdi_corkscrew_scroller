@@ -1,0 +1,13 @@
+-a
+D:\OS9\CDI\lib\cstart.r
+build\main.r
+build\scroll.r
+build\sprites.r
+-l=D:\OS9\CDI\lib\cdi.l
+-l=D:\OS9\CDI\lib\cdisys.l
+-l=D:\OS9\CDI\lib\clib.l
+-l=D:\OS9\CDI\lib\cio.l
+-l=D:\OS9\CDI\lib\math.l
+-l=D:\OS9\CDI\lib\sys.l
+-l=D:\OS9\CDI\lib\usr.l
+-l=D:\OS9\68000\lib\os_csl.l
